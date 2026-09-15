@@ -22,7 +22,7 @@ export async function register(formData) {
   }
 
   const response = await api.post('/gov/auth/signup', payload)
-  return response.data //{ status: boolean, message: string }
+  return response.data
 }
 
 /**

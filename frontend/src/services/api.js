@@ -2,13 +2,12 @@ import axios from 'axios'
 import { clearPortalSessionCaches } from './sessionCleanup'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'https://developement-of-digital-subsidy-and.onrender.com',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
-  //https://govt-subsidy-disbursement-tracking-system.onrender.com
 })
 
 // A 401 from these endpoints means "bad credentials", not "session expired",
