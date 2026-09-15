@@ -95,7 +95,6 @@ public class AuthServiceImpl {
             user.setState(req.getState());
             user.setRole(Role.BENEFICIARY);
             userRepo.save(user);
-
             return new ApiResponse(true, "Signup Successfull");
         }
         RequestsList user = new RequestsList();

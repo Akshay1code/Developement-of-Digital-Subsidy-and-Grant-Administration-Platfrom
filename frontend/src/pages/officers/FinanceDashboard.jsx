@@ -32,7 +32,7 @@ function isPendingFinanceQueueApp(app) {
 
   // Fresh Finance Officer work awaiting approval / sanction
   const isFreshFinanceWork =
-    ['UNDER_REVIEW', 'PENDING', 'SUBMITTED'].includes(status) &&
+    ['UNDER_REVIEW', 'SUBMITTED'].includes(status) &&
     ['FINANCE_OFFICER', 'FINANCE'].includes(stage)
 
   // Already approved applications that have NOT yet configured their disbursement plan
@@ -52,7 +52,7 @@ function getFinanceStatusDisplay(app) {
   const status = String(app?.status || app?.applicationStatus || '').toUpperCase()
   const stage = String(app?.currentStage || app?.stage || '').toUpperCase()
 
-  if (['UNDER_REVIEW', 'PENDING', 'SUBMITTED'].includes(status) && ['FINANCE_OFFICER', 'FINANCE'].includes(stage)) {
+  if (['UNDER_REVIEW', 'SUBMITTED'].includes(status) && ['FINANCE_OFFICER', 'FINANCE'].includes(stage)) {
     return {
       label: 'Pending Sanction',
       badgeClass: 'badge-status--applied'
@@ -110,7 +110,7 @@ function getActionButtonLabel(app) {
   const stage = String(app?.currentStage || app?.stage || '').toUpperCase()
   const isConfigured = Boolean(app?.isPlanConfigured || (app?.milestones && app?.milestones.length > 0))
 
-  if (['UNDER_REVIEW', 'PENDING', 'SUBMITTED'].includes(status) && ['FINANCE_OFFICER', 'FINANCE'].includes(stage)) {
+  if (['UNDER_REVIEW', 'SUBMITTED'].includes(status) && ['FINANCE_OFFICER', 'FINANCE'].includes(stage)) {
     return 'Review & Sanction'
   }
 

@@ -16,14 +16,14 @@ public interface WorkflowHistoryRepository extends JpaRepository<WorkflowHistory
     List<WorkflowHistory> findByNewStatus(ApplicationStatus newStatus);
 
     @Query(value = """
-        SELECT FUNCTION('DATE', wh.createdAt), wh.newStatus, COUNT(wh)
+        SELECT CAST(wh.createdAt AS date), wh.newStatus, COUNT(wh)
         FROM WorkflowHistory wh
         WHERE wh.newStatus IN (
             com.example.gov_scheme_backend.enums.ApplicationStatus.APPROVED,
             com.example.gov_scheme_backend.enums.ApplicationStatus.REJECTED
         )
         AND wh.createdAt >= :since
-        GROUP BY FUNCTION('DATE', wh.createdAt), wh.newStatus
+        GROUP BY CAST(wh.createdAt AS date), wh.newStatus
         ORDER BY 1
     """)
     List<Object[]> countApprovedRejectedSince(@Param("since") LocalDateTime since);

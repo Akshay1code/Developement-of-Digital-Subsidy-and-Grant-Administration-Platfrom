@@ -58,12 +58,50 @@ public interface DisbursementMilestoneRepo
     List<Object[]> countOverdueByReason();
 
     @Query(value = """
-        SELECT FUNCTION('DATE_FORMAT', m.releaseDate, '%Y-%m'), COUNT(m)
+        SELECT FUNCTION('TO_CHAR', m.releaseDate, 'YYYY-MM'), COUNT(m)
         FROM DisbursementMilestone m
         WHERE m.completionStatus = com.example.gov_scheme_backend.enums.MilestoneStatus.RELEASED
           AND m.releaseDate IS NOT NULL
-        GROUP BY FUNCTION('DATE_FORMAT', m.releaseDate, '%Y-%m')
+        GROUP BY FUNCTION('TO_CHAR', m.releaseDate, 'YYYY-MM')
         ORDER BY 1
     """)
     List<Object[]> countReleasedMilestonesByMonth();
+
+    @Query("""
+        SELECT m, a
+        FROM DisbursementMilestone m
+        JOIN m.plan p
+        JOIN Application a ON p.applicationId = a.id
+        JOIN FETCH a.user u
+        JOIN FETCH a.scheme s
+        WHERE m.completionStatus = com.example.gov_scheme_backend.enums.MilestoneStatus.OVERDUE
+    """)
+    List<Object[]> findOverdueMilestonesWithApplication();
+
+    @Query("""
+        SELECT m, a
+        FROM DisbursementMilestone m
+        JOIN m.plan p
+        JOIN Application a ON p.applicationId = a.id
+        JOIN FETCH a.user
+        WHERE m.completionStatus = com.example.gov_scheme_backend.enums.MilestoneStatus.PENDING 
+          AND m.dueDate BETWEEN :startDate AND :endDate
+    """)
+    List<Object[]> findUpcomingPendingMilestonesWithApplication(
+            @org.springframework.data.repository.query.Param("startDate") java.time.LocalDate startDate,
+            @org.springframework.data.repository.query.Param("endDate") java.time.LocalDate endDate
+    );
+
+    @Query("""
+        SELECT m, a
+        FROM DisbursementMilestone m
+        JOIN m.plan p
+        JOIN Application a ON p.applicationId = a.id
+        JOIN FETCH a.user
+        WHERE m.completionStatus = com.example.gov_scheme_backend.enums.MilestoneStatus.PENDING 
+          AND m.dueDate < :date
+    """)
+    List<Object[]> findOverduePendingMilestonesWithApplication(
+            @org.springframework.data.repository.query.Param("date") java.time.LocalDate date
+    );
 }

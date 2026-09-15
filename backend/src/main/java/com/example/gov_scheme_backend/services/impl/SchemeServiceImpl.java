@@ -196,20 +196,22 @@ public class SchemeServiceImpl {
         return new ApiResponse(true, "Scheme updated successfully");
     }
 
-    private RuleKey resolveRuleKey(com.example.gov_scheme_backend.enums.RuleField fieldName) {
+    private RuleKey resolveRuleKey(String fieldName) {
         if (fieldName == null) {
             return RuleKey.AGE;
         }
 
-        return switch (fieldName) {
-            case AGE -> RuleKey.AGE;
-            case ANNUAL_INCOME -> RuleKey.ANNUAL_INCOME;
-            case LAND_AREA -> RuleKey.LAND_AREA;
-            case OCCUPATION -> RuleKey.OCCUPATION;
-            case CASTE -> RuleKey.CASTE;
-            case STATE -> RuleKey.STATE;
-            case GENDER -> RuleKey.GENDER;
-        };
+        switch (fieldName.toUpperCase()) {
+            case "AGE": return RuleKey.AGE;
+            case "ANNUAL_INCOME": return RuleKey.ANNUAL_INCOME;
+            case "LAND_AREA": return RuleKey.LAND_AREA;
+            case "OCCUPATION": return RuleKey.OCCUPATION;
+            case "CASTE": return RuleKey.CASTE;
+            case "STATE": return RuleKey.STATE;
+            case "GENDER": return RuleKey.GENDER;
+            case "COLLEGE_NAME": return RuleKey.COLLEGE_NAME;
+            default: return RuleKey.STATE;
+        }
     }
 
     private SchemeCategory resolveCategory(String categoryName) {

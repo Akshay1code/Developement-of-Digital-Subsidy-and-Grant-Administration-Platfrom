@@ -60,6 +60,20 @@ function mapScheme(scheme) {
   const documents = Array.isArray(scheme?.documents) ? scheme.documents : []
   const fields = Array.isArray(scheme?.fields) ? scheme.fields : []
 
+  // Guarantee that every eligibility rule has a corresponding input field in the form.
+  // If the admin forgot to explicitly add a field for a rule, we auto-generate it here.
+  const explicitFields = fields.map(mapFieldToInput)
+  const ruleFields = rules
+    .filter(rule => rule.fieldName)
+    .map(rule => mapFieldToInput({ fieldName: rule.fieldName, mandatory: true }))
+
+  const mergedFieldsMap = new Map()
+  ruleFields.forEach(f => mergedFieldsMap.set(String(f.name).toUpperCase(), f))
+  // Explicit fields from the admin take precedence over auto-generated ones
+  explicitFields.forEach(f => mergedFieldsMap.set(String(f.name).toUpperCase(), f))
+  
+  const effectiveInputFields = Array.from(mergedFieldsMap.values())
+
   return {
     id: scheme.schemeCode,
     schemeCode: scheme.schemeCode,
@@ -81,7 +95,7 @@ function mapScheme(scheme) {
     documents,
     fields,
     requiredDocs: documents.map((doc) => humanizeEnum(doc.documentType)).filter(Boolean),
-    natureInputs: fields.map(mapFieldToInput),
+    natureInputs: effectiveInputFields,
     natureDetails: [
       { label: 'Scheme Code', value: scheme.schemeCode || 'N/A' },
       { label: 'Category', value: scheme.categoryName || 'General' },

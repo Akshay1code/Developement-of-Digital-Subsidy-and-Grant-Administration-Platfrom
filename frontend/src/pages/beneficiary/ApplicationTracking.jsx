@@ -101,10 +101,10 @@ function getLocationForStatus(status) {
       return 'Field Officer Review Desk'
     case 'UNDER_REVIEW':
       return 'Officer Review Cell'
-    case 'DISTRICT_OFFICER':
-      return 'District Review Cell'
     case 'REGIONAL_OFFICER':
       return 'Regional Review Cell'
+    case 'DISTRICT_OFFICER':
+      return 'District Review Cell'
     case 'FINANCE_OFFICER':
       return 'Finance Sanction Desk'
     case 'APPROVED':
@@ -140,7 +140,7 @@ function buildActivityLog(application) {
     })
   }
 
-  if (trackingKey === 'FIELD_OFFICER' || trackingKey === 'DISTRICT_OFFICER' || trackingKey === 'REGIONAL_OFFICER' || trackingKey === 'FINANCE_OFFICER' || status === 'APPROVED' || status === 'DISBURSED') {
+  if (trackingKey === 'FIELD_OFFICER' || trackingKey === 'REGIONAL_OFFICER' || trackingKey === 'DISTRICT_OFFICER' || trackingKey === 'FINANCE_OFFICER' || status === 'APPROVED' || status === 'DISBURSED') {
     items.push({
       time: 'Now',
       title: 'File forwarded to Field Officer',
@@ -148,18 +148,18 @@ function buildActivityLog(application) {
     })
   }
 
-  if (trackingKey === 'DISTRICT_OFFICER' || trackingKey === 'REGIONAL_OFFICER' || trackingKey === 'FINANCE_OFFICER' || status === 'APPROVED' || status === 'DISBURSED') {
+  if (trackingKey === 'REGIONAL_OFFICER' || trackingKey === 'DISTRICT_OFFICER' || trackingKey === 'FINANCE_OFFICER' || status === 'APPROVED' || status === 'DISBURSED') {
     items.push({
       time: 'Now',
-      title: 'File forwarded to District Officer',
+      title: 'File forwarded to Regional Officer',
       note: 'Completed',
     })
   }
 
-  if (trackingKey === 'REGIONAL_OFFICER' || trackingKey === 'FINANCE_OFFICER' || status === 'APPROVED' || status === 'DISBURSED') {
+  if (trackingKey === 'DISTRICT_OFFICER' || trackingKey === 'FINANCE_OFFICER' || status === 'APPROVED' || status === 'DISBURSED') {
     items.push({
       time: 'Now',
-      title: 'File forwarded to Regional Officer',
+      title: 'File forwarded to District Officer',
       note: 'Completed',
     })
   }
@@ -206,7 +206,7 @@ function buildActivityLog(application) {
 }
 
 function getStepTone(step, currentIndex) {
-  const statusSteps = ['DRAFT', 'PENDING', 'SUBMITTED', 'FIELD_OFFICER', 'DISTRICT_OFFICER', 'REGIONAL_OFFICER', 'FINANCE_OFFICER', 'APPROVED', 'DISBURSED', 'REJECTED']
+  const statusSteps = ['DRAFT', 'PENDING', 'SUBMITTED', 'FIELD_OFFICER', 'REGIONAL_OFFICER', 'DISTRICT_OFFICER', 'FINANCE_OFFICER', 'APPROVED', 'DISBURSED', 'REJECTED']
   const stepIndex = statusSteps.indexOf(step)
   if (currentIndex > stepIndex) return 'done'
   if (currentIndex === stepIndex) return 'active'
@@ -281,7 +281,7 @@ export default function ApplicationTracking() {
   const activityLog = buildActivityLog(application)
   const currentLocation = getLocationForStatus(trackingKey)
 
-  const statusSteps = ['DRAFT', 'PENDING', 'SUBMITTED', 'FIELD_OFFICER', 'DISTRICT_OFFICER', 'REGIONAL_OFFICER', 'FINANCE_OFFICER', 'APPROVED', 'DISBURSED']
+  const statusSteps = ['DRAFT', 'PENDING', 'SUBMITTED', 'FIELD_OFFICER', 'REGIONAL_OFFICER', 'DISTRICT_OFFICER', 'FINANCE_OFFICER', 'APPROVED', 'DISBURSED']
   const currentIndex = statusSteps.indexOf(trackingKey)
   const progressCards = useMemo(() => statusSteps.map((step) => ({
     key: step,
@@ -489,8 +489,8 @@ export default function ApplicationTracking() {
             <div className="tracking-card application-tracking-card">
               <div className="tracking-card__header application-tracking-card__header">
                 <h4>Application Details</h4>
-                <span className={`tracking-badge tracking-badge--${trackingKey.toLowerCase()}`}>
-                  {getStatusLabel(trackingKey)}
+                <span className="tracking-card__cta" style={{ fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+                  {application.applicationCode || application.applicationId || 'APP'}
                 </span>
               </div>
 
@@ -526,8 +526,13 @@ export default function ApplicationTracking() {
             <div className="tracking-card application-tracking-card">
               <div className="tracking-card__header application-tracking-card__header">
                 <h4>Current Location</h4>
-                <span className={`tracking-badge tracking-badge--${trackingKey.toLowerCase()}`}>
-                  {getStatusLabel(trackingKey)}
+                <span style={{
+                  fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase',
+                  letterSpacing: '0.08em', padding: '3px 10px',
+                  borderRadius: '99px', background: 'rgba(22,163,74,0.1)',
+                  color: '#15803d', border: '1px solid rgba(22,163,74,0.2)'
+                }}>
+                  LIVE
                 </span>
               </div>
               <div className="tracking-modal__status application-tracking-location">

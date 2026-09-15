@@ -920,46 +920,185 @@
   font-size: 1.28rem;
 }
 
+/* ── Document upload progress bar ── */
+.docs-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin: 1.25rem 0 0.25rem;
+}
+
+.docs-progress__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.docs-progress__fill {
+  height: 100%;
+  background: #1e8e3e;
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.docs-progress__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Doc card grid ── */
 .docs-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
-.doc-upload-card {
+/* ── Individual doc card ── */
+.doc-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  padding: 1rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1.25rem 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(130, 174, 202, 0.14);
+  border: 1.5px dashed rgba(130, 174, 202, 0.25);
   background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  transition: border-color 200ms ease, background 200ms ease, transform 180ms ease;
+  cursor: default;
 }
 
-.doc-upload-card__label {
-  font-size: 0.94rem;
+.doc-card:hover {
+  border-color: rgba(130, 174, 202, 0.5);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-2px);
+}
+
+.doc-card--filled {
+  border-style: solid;
+  border-color: rgba(30, 142, 62, 0.5);
+  background: rgba(30, 142, 62, 0.06);
+}
+
+.doc-card--filled:hover {
+  border-color: rgba(30, 142, 62, 0.7);
+  background: rgba(30, 142, 62, 0.09);
+}
+
+/* ── Badge (Required / Optional) ── */
+.doc-card__badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.65rem;
   font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.doc-card__badge--required {
+  background: rgba(220, 53, 69, 0.12);
+  color: #ff6b76;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.doc-card__badge--optional {
+  background: rgba(130, 174, 202, 0.1);
+  color: #a4d3f5;
+  border: 1px solid rgba(130, 174, 202, 0.18);
+}
+
+/* ── Icon ── */
+.doc-card__icon-wrap {
+  margin-top: 0.25rem;
+}
+
+.doc-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(130, 174, 202, 0.08);
+  border: 1px solid rgba(130, 174, 202, 0.16);
+  color: rgba(164, 211, 245, 0.7);
+}
+
+.doc-card__icon--done {
+  background: rgba(30, 142, 62, 0.12);
+  border-color: rgba(30, 142, 62, 0.25);
+  color: #1e8e3e;
+}
+
+/* ── Label ── */
+.doc-card__label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+/* ── File name ── */
+.doc-card__filename {
+  font-size: 0.72rem;
+  color: var(--muted);
+  word-break: break-all;
+  line-height: 1.4;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.doc-card__filename--set {
+  color: #8ed66a;
+  font-weight: 600;
+}
+
+/* ── Choose / Replace button ── */
+.doc-card__btn {
+  margin-top: 0.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(130, 174, 202, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms ease;
+  width: 100%;
+}
+
+.doc-card__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(130, 174, 202, 0.5);
   color: var(--text);
 }
 
-.doc-upload-card__hint {
-  font-size: 0.8rem;
-  color: var(--text-soft);
-  line-height: 1.5;
+.doc-card__btn--replace {
+  border-color: rgba(30, 142, 62, 0.3);
+  background: rgba(30, 142, 62, 0.07);
+  color: #8ed66a;
 }
 
-.doc-upload-card input[type='file'] {
-  margin-top: 0.35rem;
-  width: 100%;
-  color: var(--text-soft);
+.doc-card__btn--replace:hover {
+  background: rgba(30, 142, 62, 0.12);
+  border-color: rgba(30, 142, 62, 0.5);
+  color: #a3e67e;
 }
 
-.doc-upload-card__file {
-  font-size: 0.78rem;
-  color: #f1c27a;
-  word-break: break-word;
-}
 
 .eligibility-json {
   margin-top: 0.9rem;
@@ -1071,31 +1210,138 @@
   flex-shrink: 0;
 }
 
-/* Dynamic application form layout */
-.scheme-form-layout {
+/* ==========================================
+   WIZARD CONTAINER & STEPPER
+   ========================================== */
+
+.wizard-container {
+  width: 100%;
   max-width: 1080px;
-  margin: 0 auto 3rem;
-  padding: 2.2rem;
-  border-radius: 28px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
 }
 
+.wizard-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative;
+}
+
+.wizard-stepper__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  position: relative;
+}
+
+.wizard-stepper__circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  background: rgba(255,255,255,0.03);
+  transition: all 0.25s ease;
+}
+
+.wizard-stepper__circle.is-active {
+  border-color: var(--accent-strong);
+  background: rgba(255,199,106,0.12);
+  color: var(--accent-strong);
+  box-shadow: 0 0 0 4px rgba(255,199,106,0.1);
+}
+
+.wizard-stepper__circle.is-done {
+  border-color: #1e8e3e;
+  background: rgba(30,142,62,0.12);
+  color: #1e8e3e;
+}
+
+.wizard-stepper__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.wizard-stepper__label.is-active {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.wizard-stepper__line {
+  height: 2px;
+  width: 60px;
+  background: var(--border);
+  margin: 0 0.5rem;
+  border-radius: 2px;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.wizard-stepper__line.is-done {
+  background: #1e8e3e;
+}
+
+/* ==========================================
+   STEP CARD BASE (all three steps use this)
+   ========================================== */
+
+.scheme-form-layout {
+  width: 100%;
+  max-height: calc(100vh - 195px);
+  overflow-y: auto;
+  padding: 1.75rem 2rem;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.scheme-form-layout::-webkit-scrollbar {
+  width: 5px;
+}
+.scheme-form-layout::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+}
+
+/* Override conflicting margin from older classes */
+.scheme-form-layout.eligibility-results-container { margin-top: 0; }
+.scheme-form-layout.docs-submission-panel { margin-top: 0; }
+
 .form-header-bar {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 1.2rem;
+  padding-bottom: 1rem;
 }
 
 .form-header-bar h2 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
   font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 2.1rem;
+  font-size: 1.75rem;
 }
 
 .form-header-bar p {
   margin: 0;
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   color: var(--accent-strong);
   font-weight: 700;
   text-transform: uppercase;
@@ -1105,7 +1351,7 @@
 .form-flex-columns {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: start;
 }
 
@@ -1122,26 +1368,26 @@
 .form-column-scanner h3 {
   margin: 0 0 0.25rem;
   font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 1.38rem;
+  font-size: 1.25rem;
 }
 
 .helper-text {
-  font-size: 0.84rem;
+  font-size: 0.83rem;
   color: var(--muted);
-  margin: 0 0 1.25rem;
+  margin: 0 0 1rem;
 }
 
 .form-group-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1rem;
 }
 
 .scheme-dynamic-inputs {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.9rem;
 }
 
 .req {
@@ -1153,23 +1399,10 @@
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid var(--border);
-  padding-top: 1.5rem;
-}
-
-@media (max-width: 1100px) {
-  .docs-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .eligibility-result-card__stats {
-    grid-template-columns: 1fr;
-  }
-
-  .eligibility-score-hero {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-  }
+  padding-top: 1.25rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 /* Scanner styles */
@@ -1830,31 +2063,33 @@
 
 /* --- Eligibility Evaluation Results Custom Styles --- */
 .eligibility-results-container {
-  margin-top: 3rem;
+  margin-top: 0;
 }
 .eligibility-results-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
 .eligibility-results-header h2 {
   font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 2.2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.3rem;
 }
 .eligibility-results-header p {
   color: #64748b;
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin: 0;
 }
 .eligibility-results-grid {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 2rem;
+  grid-template-columns: 280px 1fr;
+  gap: 1.25rem;
   align-items: start;
 }
 .eligibility-status-card {
-  padding: 2.5rem 1.5rem;
+  padding: 1.5rem 1.25rem;
   border-radius: 12px;
   text-align: center;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -1888,8 +2123,8 @@
 }
 .eligibility-status-card h3 {
   font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 1.75rem;
-  margin: 0 0 0.75rem;
+  font-size: 1.4rem;
+  margin: 0 0 0.5rem;
   font-weight: 700;
 }
 .status-ineligible h3 {
@@ -1899,7 +2134,7 @@
   color: #137333;
 }
 .eligibility-status-card p {
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   line-height: 1.5;
   margin: 0;
 }
@@ -1912,8 +2147,8 @@
 .eligibility-score-summary-card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
-  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #f1f5f9;
 }
@@ -1953,10 +2188,10 @@
   line-height: 1;
 }
 .score-computed .score-value {
-  font-size: 3.5rem;
+  font-size: 2.25rem;
 }
 .score-required .score-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: #64748b;
 }
 .score-progress-bar {
@@ -1986,19 +2221,19 @@
 .breakdown-field-card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #f1f5f9;
 }
 .breakdown-field-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 .breakdown-field-header h4 {
   font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #0f172a;
   margin: 0;
@@ -2037,7 +2272,7 @@
   gap: 1rem;
 }
 .breakdown-req-block, .breakdown-input-block {
-  padding: 1rem 1.25rem;
+  padding: 0.7rem 1rem;
   border-radius: 8px;
 }
 .breakdown-req-block {
@@ -2068,4 +2303,179 @@
 }
 .input-passed .block-value {
   color: #137333;
+}
+
+/* ==========================================
+   WIZARD RESPONSIVE BREAKPOINTS
+   ========================================== */
+
+/* Large tablets / small desktops — collapse eligibility grid */
+@media (max-width: 900px) {
+  .scheme-form-layout {
+    max-height: calc(100vh - 185px);
+    padding: 1.25rem 1.25rem;
+  }
+
+  .wizard-stepper__line {
+    width: 36px;
+  }
+
+  .eligibility-results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eligibility-results-left {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .eligibility-score-summary-card {
+    margin-top: 0;
+  }
+
+  .docs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablets */
+@media (max-width: 700px) {
+  .scheme-detail-layout {
+    padding: 0.5rem;
+  }
+
+  .scheme-main {
+    margin-top: 0.75rem;
+  }
+
+  .wizard-container {
+    gap: 0.5rem;
+  }
+
+  .wizard-stepper {
+    padding: 0.6rem 0.75rem;
+    border-radius: 14px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .wizard-stepper__label {
+    display: none; /* hide labels on very small screens */
+  }
+
+  .wizard-stepper__line {
+    width: 28px;
+    margin: 0 0.25rem;
+  }
+
+  .scheme-form-layout {
+    max-height: calc(100vh - 170px);
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .form-header-bar {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .form-header-bar h2 {
+    font-size: 1.35rem;
+  }
+
+  .eligibility-results-left {
+    grid-template-columns: 1fr;
+  }
+
+  .eligibility-results-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .eligibility-results-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .breakdown-field-body {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-submission-panel__header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-action-navs {
+    justify-content: flex-start;
+    gap: 0.6rem;
+  }
+
+  .form-action-navs .button {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 0.82rem;
+    padding: 0.6rem 0.8rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .wizard-stepper__circle {
+    width: 26px;
+    height: 26px;
+    font-size: 0.7rem;
+  }
+
+  .scheme-form-layout {
+    max-height: calc(100vh - 160px);
+    padding: 0.85rem;
+    border-radius: 14px;
+  }
+
+  .form-header-bar h2 {
+    font-size: 1.15rem;
+  }
+
+  .eligibility-status-card {
+    padding: 1rem;
+  }
+
+  .eligibility-status-card h3 {
+    font-size: 1.15rem;
+  }
+
+  .score-computed .score-value {
+    font-size: 1.75rem;
+  }
+
+  .breakdown-field-header h4 {
+    font-size: 0.95rem;
+  }
+
+  .breakdown-field-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .eligibility-score-summary-card {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .docs-submission-panel__header h3 {
+    font-size: 1rem;
+  }
+
+  .doc-upload-card {
+    padding: 0.75rem;
+  }
 }

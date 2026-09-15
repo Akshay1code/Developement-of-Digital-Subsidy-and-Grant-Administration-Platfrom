@@ -12,7 +12,12 @@ public interface SchemeRepo extends JpaRepository<Schemes, Long> {
 
     Optional<Schemes> findBySchemeCode(String schemeCode);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"category"})
     List<Schemes> findByCategory_CategoryNameIgnoreCase(String categoryName);
+
+    @Override
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"category"})
+    List<Schemes> findAll();
 
     @org.springframework.data.jpa.repository.Query("""
         SELECT c.categoryName, SUM(s.allocatedFunds), SUM(s.budgetUsed)
@@ -21,4 +26,7 @@ public interface SchemeRepo extends JpaRepository<Schemes, Long> {
         GROUP BY c.categoryName
     """)
     List<Object[]> sumFundsByCategory();
+
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Schemes s LEFT JOIN FETCH s.eligibilityRules WHERE s.schemeCode = :schemeCode")
+    Optional<Schemes> findBySchemeCodeWithRules(@org.springframework.data.repository.query.Param("schemeCode") String schemeCode);
 }

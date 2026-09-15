@@ -619,13 +619,13 @@ export default function AdminDashboard() {
                       {stage.replace('_', ' ')}
                     </div>
                     <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text)', marginTop: '0.3rem' }}>
-                      {totalCount}
+                      {unassignedCount}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text)' }}>
-                      total application{totalCount === 1 ? '' : 's'} in stage
+                      application{unassignedCount === 1 ? '' : 's'} awaiting allocation
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: unassignedCount > 0 ? '#f59e0b' : 'var(--muted)', marginTop: '0.4rem', fontWeight: 600 }}>
-                      • {unassignedCount} awaiting allocation
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.4rem', fontWeight: 600 }}>
+                      • {totalCount} total in stage
                     </div>
                   </button>
                 )

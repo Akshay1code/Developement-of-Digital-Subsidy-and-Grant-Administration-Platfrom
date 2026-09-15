@@ -77,7 +77,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
 
-        Schemes scheme = schemeRepo.findBySchemeCode(req.getSchemeCode().trim())
+        Schemes scheme = schemeRepo.findBySchemeCodeWithRules(req.getSchemeCode().trim())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Scheme not found with code: "
@@ -162,28 +162,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application saved = applicationRepo.save(app);
 
         /*
-         * Before running the eligibility engine, make sure all
-         * required eligibility fields have been provided.
-         */
-        String missingField =
-                findMissingEligibilityField(
-                        scheme,
-                        submittedFields);
-
-        if (missingField != null) {
-
-            return new EligibilityEngineScoreDTO(
-                    false,
-                    0.0,
-                    0.0,
-                    "Missing value for field: " + missingField,
-                    new java.util.ArrayList<>()
-            );
-        }
-
-        /*
-         * Run eligibility engine after all required fields
-         * have been supplied.
+         * Run eligibility engine. Rules whose fields were not submitted are
+         * skipped inside validateFields (userValue == null → continue), so we
+         * do NOT abort here — a partial submission is still evaluated.
          */
         EligibilityEngineScoreDTO result = check.validateFields(saved.getId());
 
@@ -325,13 +306,14 @@ public class ApplicationServiceImpl implements ApplicationService {
             return null;
         }
 
+        // Normalize to UPPERCASE so frontend lowercase names match DB uppercase rule fields
         Set<String> providedFields =
                 submittedFields.stream()
                         .filter(dto ->
                                 dto != null
                                         && dto.getFieldName() != null)
                         .map(dto ->
-                                dto.getFieldName().name())
+                                dto.getFieldName().trim().toUpperCase())
                         .collect(Collectors.toSet());
 
         for (var rule : scheme.getEligibilityRules()) {
@@ -343,9 +325,9 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
 
             if (!providedFields.contains(
-                    rule.getFieldName().name())) {
+                    rule.getFieldName().trim().toUpperCase())) {
 
-                return rule.getFieldName().name();
+                return rule.getFieldName();
             }
         }
 

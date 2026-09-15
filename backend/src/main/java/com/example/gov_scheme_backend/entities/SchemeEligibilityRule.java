@@ -1,6 +1,5 @@
 package com.example.gov_scheme_backend.entities;
 
-import com.example.gov_scheme_backend.enums.RuleField;
 import com.example.gov_scheme_backend.enums.RuleKey;
 import com.example.gov_scheme_backend.enums.RuleOperator;
 import jakarta.persistence.*;
@@ -23,9 +22,7 @@ public class SchemeEligibilityRule {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "scheme_code", referencedColumnName = "scheme_code", nullable = false)
     private Schemes scheme;
-    @Enumerated(EnumType.STRING)
-    @Column
-    RuleField fieldName;
+    String fieldName;
     @Column
     String expectedValue;
     @Column

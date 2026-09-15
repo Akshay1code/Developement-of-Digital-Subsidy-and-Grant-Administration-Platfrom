@@ -2,14 +2,14 @@ import '../../styles/Dashboard.css';
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import DashboardTopbar from '../../components/DashboardTopbar'
+import AdminLayout from '../../components/AdminLayout'
 import ProfilePanel from '../../components/ProfilePanel'
 import { FaClipboardList, FaHourglassHalf, FaCheckCircle, FaTimesCircle, FaHome, FaChartLine, FaBell, FaUserCircle } from 'react-icons/fa'
 import api from '../../services/api'
-import { 
-  getMyApplications, 
-  getDisbursementPlan, 
-  configureDisbursementPlan, 
+import {
+  getMyApplications,
+  getDisbursementPlan,
+  configureDisbursementPlan,
   completeMilestone,
   rejectProof,
   releaseMilestone,
@@ -144,8 +144,7 @@ export default function OfficerDashboard() {
   const total = applications.length
   const pending = applications.filter(a => {
     const status = String(a.status || '').toUpperCase()
-    return status === 'PENDING'
-      || status === 'SUBMITTED'
+    return status === 'SUBMITTED'
       || status === 'UNDER_REVIEW'
       || status === 'FIELD_OFFICER'
       || status === 'DISTRICT_OFFICER'
@@ -169,7 +168,7 @@ export default function OfficerDashboard() {
       statusFilter === 'All' ||
       (
         normalizedFilter === 'PENDING'
-          ? ['PENDING', 'SUBMITTED', 'UNDER_REVIEW', 'FIELD_OFFICER', 'DISTRICT_OFFICER', 'REGIONAL_OFFICER', 'FINANCE_OFFICER'].includes(appStatus.toUpperCase())
+          ? ['SUBMITTED', 'UNDER_REVIEW', 'FIELD_OFFICER', 'DISTRICT_OFFICER', 'REGIONAL_OFFICER', 'FINANCE_OFFICER'].includes(appStatus.toUpperCase())
           : appStatus.toUpperCase() === normalizedFilter
       )
     return matchesSearch && matchesStatus
@@ -334,7 +333,7 @@ export default function OfficerDashboard() {
     try {
       const plan = await getDisbursementPlan(applicationId)
       setDisbursementPlan(plan)
-      
+
       // If milestones are empty, initialize default configuration stages
       if (!plan.milestones || plan.milestones.length === 0) {
         const count = plan.totalStages || 3
@@ -548,7 +547,7 @@ export default function OfficerDashboard() {
       showToast('Overdue milestone resolved successfully!')
       setShowResolveModal(false)
       setResolvedReasonInput('')
-      
+
       // Refresh current plan if open
       if (selectedApp) {
         const plan = await getDisbursementPlan(selectedApp.id)
@@ -593,7 +592,7 @@ export default function OfficerDashboard() {
   if (!officer) return null
 
   return (
-    <div className="dashboard-layout">
+    <AdminLayout activeTab={null} onTabChange={() => { }} userName={officer.fullName} userRole={officer.designation || 'Officer'}>
       {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
@@ -608,351 +607,383 @@ export default function OfficerDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Header Sticky Topbar */}
-      <DashboardTopbar
-        brandTitle="GS Officer Portal"
-        brandSubtitle="National Subsidy Tracking & Oversight"
-        userName={officer.fullName}
-        userRole={officer.designation || 'Officer'}
-        onLogout={handleLogout}
-        showHomeLink={false}
-      />
-
-      {/* Main Panel Content */}
-      <main className="dashboard-main">
-        <div className="dashboard-tabs">
-          <button
-            className={`dashboard-tab ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => setActiveTab('home')}
-          >
-            <FaHome /> Dashboard Home
-          </button>
-          <button
-            className={`dashboard-tab ${activeTab === 'applications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('applications')}
-          >
-            <FaClipboardList /> Application Management
-            {pending > 0 && <span className="tab-badge">{pending}</span>}
-          </button>
-          <button
-            className={`dashboard-tab ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reports')}
-          >
-            <FaChartLine /> Reports &amp; Analytics
-          </button>
-          <button
-            className={`dashboard-tab ${activeTab === 'notifications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('notifications')}
-          >
-            <FaBell /> Alerts &amp; Reminders
-            {notifications.length > 0 && <span className="tab-badge" style={{ background: '#a855f7' }}>{notifications.length}</span>}
-          </button>
-          <button
-            className={`dashboard-tab ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            <FaUserCircle /> Profile
-          </button>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--brand-green)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>
+            Officer Workspace
+          </div>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
+            National Subsidy Tracking & Oversight
+          </h1>
         </div>
+      </div>
 
-        <div className="tab-pane">
-          {/* TAB 1: DASHBOARD HOME */}
-          {activeTab === 'home' && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <div className="pane-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div>
-                  <h2>Officer Dashboard</h2>
-                  <p>Monitor subsidy applications, verify documents, and approve or reject requests.</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', borderBottom: '2px solid var(--border-soft)', marginBottom: '1.75rem' }}>
+        <button
+          onClick={() => setActiveTab('home')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.1rem',
+            background: activeTab === 'home' ? 'var(--green-xlight)' : 'transparent',
+            color: activeTab === 'home' ? 'var(--brand-green-deep)' : 'var(--text-muted)',
+            fontSize: '0.875rem', fontWeight: activeTab === 'home' ? 700 : 500, cursor: 'pointer', border: 'none',
+            borderBottom: activeTab === 'home' ? '2px solid var(--brand-green)' : '2px solid transparent',
+            borderRadius: '8px 8px 0 0', transition: 'all 160ms ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <FaHome /> Dashboard Home
+        </button>
+        <button
+          onClick={() => setActiveTab('applications')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.1rem',
+            background: activeTab === 'applications' ? 'var(--green-xlight)' : 'transparent',
+            color: activeTab === 'applications' ? 'var(--brand-green-deep)' : 'var(--text-muted)',
+            fontSize: '0.875rem', fontWeight: activeTab === 'applications' ? 700 : 500, cursor: 'pointer', border: 'none',
+            borderBottom: activeTab === 'applications' ? '2px solid var(--brand-green)' : '2px solid transparent',
+            borderRadius: '8px 8px 0 0', transition: 'all 160ms ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <FaClipboardList /> Application Management
+          {pending > 0 && <span style={{ display: 'inline-grid', placeItems: 'center', minWidth: 18, height: 18, padding: '0 4px', borderRadius: 9, background: 'var(--brand-green)', color: '#fff', fontSize: '0.68rem', fontWeight: 800 }}>{pending}</span>}
+        </button>
+        <button
+          onClick={() => setActiveTab('reports')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.1rem',
+            background: activeTab === 'reports' ? 'var(--green-xlight)' : 'transparent',
+            color: activeTab === 'reports' ? 'var(--brand-green-deep)' : 'var(--text-muted)',
+            fontSize: '0.875rem', fontWeight: activeTab === 'reports' ? 700 : 500, cursor: 'pointer', border: 'none',
+            borderBottom: activeTab === 'reports' ? '2px solid var(--brand-green)' : '2px solid transparent',
+            borderRadius: '8px 8px 0 0', transition: 'all 160ms ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <FaChartLine /> Non-Compliance
+        </button>
+        <button
+          onClick={() => setActiveTab('notifications')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.1rem',
+            background: activeTab === 'notifications' ? 'var(--green-xlight)' : 'transparent',
+            color: activeTab === 'notifications' ? 'var(--brand-green-deep)' : 'var(--text-muted)',
+            fontSize: '0.875rem', fontWeight: activeTab === 'notifications' ? 700 : 500, cursor: 'pointer', border: 'none',
+            borderBottom: activeTab === 'notifications' ? '2px solid var(--brand-green)' : '2px solid transparent',
+            borderRadius: '8px 8px 0 0', transition: 'all 160ms ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <FaBell /> Alerts &amp; Reminders
+          {notifications.length > 0 && <span style={{ display: 'inline-grid', placeItems: 'center', minWidth: 18, height: 18, padding: '0 4px', borderRadius: 9, background: '#a855f7', color: '#fff', fontSize: '0.68rem', fontWeight: 800 }}>{notifications.length}</span>}
+        </button>
+        <button
+          onClick={() => setActiveTab('profile')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.1rem',
+            background: activeTab === 'profile' ? 'var(--green-xlight)' : 'transparent',
+            color: activeTab === 'profile' ? 'var(--brand-green-deep)' : 'var(--text-muted)',
+            fontSize: '0.875rem', fontWeight: activeTab === 'profile' ? 700 : 500, cursor: 'pointer', border: 'none',
+            borderBottom: activeTab === 'profile' ? '2px solid var(--brand-green)' : '2px solid transparent',
+            borderRadius: '8px 8px 0 0', transition: 'all 160ms ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <FaUserCircle /> Profile
+        </button>
+      </div>
+
+      <div className="tab-pane">
+        {/* TAB 1: DASHBOARD HOME */}
+        {activeTab === 'home' && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="pane-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h2>Officer Dashboard</h2>
+                <p>Monitor subsidy applications, verify documents, and approve or reject requests.</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+              {/* Total Applications */}
+              <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span>Total Applications</span>
+                  <FaClipboardList style={{ fontSize: '1.1rem', opacity: 0.7 }} />
                 </div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '0.5rem 0' }}>{total}</div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--brand-green)' }}>Overall assigned workload</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                {/* Total Applications */}
-                <div className="stat-card stat-card--total">
-                  <div className="stat-card__header">
-                    <span>Total Applications</span>
-                    <FaClipboardList style={{ fontSize: '1.1rem', opacity: 0.7 }} />
-                  </div>
-                  <div className="stat-card__value">{total}</div>
-                  <span className="stat-card__desc" style={{ color: '#82aeca' }}>Overall assigned workload</span>
+              {/* Pending Applications */}
+              <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span>Pending Action</span>
+                  <FaHourglassHalf style={{ fontSize: '1.1rem', opacity: 0.7 }} />
                 </div>
-
-                {/* Pending Applications */}
-                <div className="stat-card stat-card--pending">
-                  <div className="stat-card__header">
-                    <span>Pending Action</span>
-                    <FaHourglassHalf style={{ fontSize: '1.1rem', opacity: 0.7 }} />
-                  </div>
-                  <div className="stat-card__value" style={{ color: '#f59e0b' }}>{pending}</div>
-                  <span className="stat-card__desc">Awaiting your verification</span>
-                </div>
-
-                {/* Approved Applications */}
-                <div className="stat-card stat-card--approved">
-                  <div className="stat-card__header">
-                    <span>Approved & Eligible</span>
-                    <FaCheckCircle style={{ fontSize: '1.1rem', opacity: 0.7, color: '#22c55e' }} />
-                  </div>
-                  <div className="stat-card__value" style={{ color: '#22c55e' }}>{approved}</div>
-                  <span className="stat-card__desc" style={{ color: '#8ed66a' }}>{approvalRate}% Approval rate</span>
-                </div>
-
-                {/* Rejected Applications */}
-                <div className="stat-card stat-card--rejected">
-                  <div className="stat-card__header">
-                    <span>Rejected Applications</span>
-                    <FaTimesCircle style={{ fontSize: '1.1rem', opacity: 0.7, color: '#ef4444' }} />
-                  </div>
-                  <div className="stat-card__value" style={{ color: '#ef4444' }}>{rejected}</div>
-                  <span className="stat-card__desc">Ineligible or issues found</span>
-                </div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f59e0b', margin: '0.5rem 0' }}>{pending}</div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Awaiting your verification</span>
               </div>
 
-              <h3 className="section-title" style={{ marginTop: '2.5rem' }}>Recent Applications</h3>
-              {applications.length === 0 ? (
-                <div className="empty-state"><p>No applications assigned yet.</p></div>
-              ) : (
-                <div className="dbt-ledger-wrap">
-                  <table className="dbt-ledger">
-                    <thead>
-                      <tr>
-                        <th>Application ID</th>
-                        <th>Applicant</th>
-                        <th>Scheme</th>
-                        <th>Submitted</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {applications.slice(0, 5).map(app => (
-                        <tr key={app.id || app.applicationId}>
-                          <td className="font-mono text-soft">{app.id || app.applicationId}</td>
-                          <td>{app.applicant || app.applicantName}</td>
-                          <td>{app.schemeName || app.schemeId || '—'}</td>
-                          <td className="font-mono">{app.submittedDate || app.createdAt || '—'}</td>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                              <span className={`badge-status ${STATUS_BADGE[app.status] || ''}`}>{app.status}</span>
-                              {app.currentStage && (
-                                <span style={{ fontSize: '0.72rem', color: 'var(--muted)', textTransform: 'capitalize' }}>
-                                  Stage: {String(app.currentStage).split('_').join(' ').toLowerCase()}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Approved Applications */}
+              <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span>Approved & Eligible</span>
+                  <FaCheckCircle style={{ fontSize: '1.1rem', opacity: 0.7, color: '#16a34a' }} />
                 </div>
-              )}
-
-              <div style={{ marginTop: '1.5rem' }}>
-                <button className="button button--primary" onClick={() => setActiveTab('applications')}>
-                  Manage Applications
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 2: APPLICATION MANAGEMENT */}
-          {activeTab === 'applications' && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <div className="pane-header">
-                <h2>Application Management</h2>
-                <p>Review submitted applications and approve or reject subsidy requests.</p>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#16a34a', margin: '0.5rem 0' }}>{approved}</div>
+                <span style={{ fontSize: '0.8rem', color: '#16a34a' }}>{approvalRate}% Approval rate</span>
               </div>
 
-              <div className="filter-bar">
-                <div className="search-box">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search by applicant or application ID..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+              {/* Rejected Applications */}
+              <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span>Rejected Applications</span>
+                  <FaTimesCircle style={{ fontSize: '1.1rem', opacity: 0.7, color: '#ef4444' }} />
                 </div>
-                <div className="category-chips">
-                  {['All', 'Pending', 'Approved', 'Rejected'].map(status => (
-                    <button
-                      key={status}
-                      className={`cat-chip ${statusFilter === status ? 'active' : ''}`}
-                      onClick={() => setStatusFilter(status)}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#ef4444', margin: '0.5rem 0' }}>{rejected}</div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ineligible or issues found</span>
               </div>
+            </div>
 
-              {filteredApps.length > 0 ? (
-                <div className="dbt-ledger-wrap">
-                  <table className="dbt-ledger">
-                    <thead>
-                      <tr>
-                        <th>Application ID</th>
-                        <th>Applicant</th>
-                        <th>Scheme</th>
-                        <th>Submitted</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredApps.map(app => (
-                        <tr key={app.id || app.applicationId}>
-                          <td className="font-mono text-soft">{app.id || app.applicationId}</td>
-                          <td>{app.applicant || app.applicantName}</td>
-                          <td>{app.schemeName || app.schemeId || '—'}</td>
-                          <td className="font-mono">{app.submittedDate || app.createdAt || '—'}</td>
-                          <td>
+            <h3 className="section-title" style={{ marginTop: '2.5rem' }}>Recent Applications</h3>
+            {applications.length === 0 ? (
+              <div className="empty-state"><p>No applications assigned yet.</p></div>
+            ) : (
+              <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                    <tr>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Application ID</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Applicant</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Scheme</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Submitted</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody style={{ fontSize: '0.85rem' }}>
+                    {applications.slice(0, 5).map((app, i) => (
+                      <tr key={app.id || app.applicationId} style={{ borderBottom: i === 4 ? 'none' : '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{app.id || app.applicationId}</td>
+                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{app.applicant || app.applicantName}</td>
+                        <td style={{ padding: '0.75rem 1rem' }}>{app.schemeName || app.schemeId || '—'}</td>
+                        <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)' }}>{app.submittedDate || app.createdAt || '—'}</td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                             <span className={`badge-status ${STATUS_BADGE[app.status] || ''}`}>{app.status}</span>
-                          </td>
-                          <td>
-                            <button className="officer-view-btn" onClick={() => openApplication(app)}>
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <h3>No applications match your criteria</h3>
-                  <p>Try adjusting your search terms or filters.</p>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* TAB 3: REPORTS & ANALYTICS */}
-          {activeTab === 'reports' && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              
-              <div className="reports-analytics-shell">
-                <SchemeDashboard />
-              </div>
-
-              <h3 className="section-title" style={{ marginTop: '2.5rem', color: '#ef4444' }}>⚠️ Non-Compliance &amp; Overdue Milestones</h3>
-              {overdueReports.length === 0 ? (
-                <div className="empty-state" style={{ border: '1px dashed var(--border)', padding: '2rem' }}>
-                  <p>All milestones are compliant. No overdue stages found.</p>
-                </div>
-              ) : (
-                <div className="dbt-ledger-wrap" style={{ marginTop: '1rem' }}>
-                  <table className="dbt-ledger">
-                    <thead>
-                      <tr>
-                        <th>Milestone ID</th>
-                        <th>Beneficiary Name</th>
-                        <th>Scheme</th>
-                        <th>Milestone Name</th>
-                        <th>Due Date</th>
-                        <th>Days Overdue</th>
-                        <th>Action</th>
+                            {app.currentStage && (
+                              <span style={{ fontSize: '0.72rem', color: 'var(--muted)', textTransform: 'capitalize' }}>
+                                Stage: {String(app.currentStage).split('_').join(' ').toLowerCase()}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {overdueReports.map(rep => (
-                        <tr key={rep.milestoneId}>
-                          <td className="font-mono text-soft">#{rep.milestoneId}</td>
-                          <td style={{ fontWeight: 600 }}>{rep.beneficiaryName}</td>
-                          <td>{rep.schemeName}</td>
-                          <td>{rep.milestoneName}</td>
-                          <td className="font-mono" style={{ color: '#ef4444' }}>{rep.dueDate}</td>
-                          <td style={{ color: '#ef4444', fontWeight: 'bold' }}>
-                            {rep.daysOverdue} days
-                          </td>
-                          <td>
-                            <button 
-                              className="button button--secondary" 
-                              style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', borderColor: '#ef4444', color: '#ef4444' }}
-                              onClick={() => {
-                                setResolvingMilestoneId(rep.milestoneId)
-                                setShowResolveModal(true)
-                              }}
-                            >
-                              Resolve Override
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* TAB 4: ALERTS & REMINDERS */}
-          {activeTab === 'notifications' && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <div className="pane-header">
-                <h2>Alerts &amp; Reminders Log</h2>
-                <p>Notifications dispatched to beneficiaries reminding them of upcoming due dates.</p>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            )}
 
-              {notifications.length === 0 ? (
-                <div className="empty-state" style={{ padding: '3rem' }}>
-                  <p>No notifications have been dispatched yet.</p>
-                </div>
-              ) : (
-                <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
-                  {notifications.map(notif => (
-                    <div 
-                      key={notif.id} 
-                      className="notification-item" 
-                      style={{ 
-                        background: 'var(--card-bg)', 
-                        border: '1px solid var(--border)', 
-                        borderRadius: '8px', 
-                        padding: '1.2rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text)' }}>
-                          Recipient: {notif.user?.fullName} (@{notif.user?.username})
-                        </span>
-                        <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-                          Sent: {notif.sentDate}
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)' }}>
-                        {notif.message}
-                      </p>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-                        Milestone Reference: #{notif.milestoneId}
-                      </div>
+            <div style={{ marginTop: '1.5rem' }}>
+              <button className="button button--primary" onClick={() => setActiveTab('applications')}>
+                Manage Applications
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* TAB 2: APPLICATION MANAGEMENT */}
+        {activeTab === 'applications' && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="pane-header">
+              <h2>Application Management</h2>
+              <p>Review submitted applications and approve or reject subsidy requests.</p>
+            </div>
+
+            <div className="filter-bar">
+              <div className="search-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search by applicant or application ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="category-chips">
+                {['All', 'Pending', 'Approved', 'Rejected'].map(status => (
+                  <button
+                    key={status}
+                    className={`cat-chip ${statusFilter === status ? 'active' : ''}`}
+                    onClick={() => setStatusFilter(status)}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filteredApps.length > 0 ? (
+              <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                    <tr>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Application ID</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Applicant</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Scheme</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Submitted</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody style={{ fontSize: '0.85rem' }}>
+                    {filteredApps.map((app, i) => (
+                      <tr key={app.id || app.applicationId} style={{ borderBottom: i === filteredApps.length - 1 ? 'none' : '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{app.id || app.applicationId}</td>
+                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{app.applicant || app.applicantName}</td>
+                        <td style={{ padding: '0.75rem 1rem' }}>{app.schemeName || app.schemeId || '—'}</td>
+                        <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)' }}>{app.submittedDate || app.createdAt || '—'}</td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <span className={`badge-status ${STATUS_BADGE[app.status] || ''}`}>{app.status}</span>
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <button className="button button--ghost" style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem' }} onClick={() => openApplication(app)}>
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <h3>No applications match your criteria</h3>
+                <p>Try adjusting your search terms or filters.</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* TAB 3: REPORTS & ANALYTICS */}
+        {activeTab === 'reports' && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+
+            {/* SchemeAnalytics was moved to a standalone page via AdminLayout. 
+                  This tab now only shows Compliance/Overdue reports. */}
+
+            <h3 className="section-title" style={{ marginTop: '2.5rem', color: '#ef4444' }}>⚠️ Non-Compliance &amp; Overdue Milestones</h3>
+            {overdueReports.length === 0 ? (
+              <div className="empty-state" style={{ border: '1px dashed var(--border)', padding: '2rem' }}>
+                <p>All milestones are compliant. No overdue stages found.</p>
+              </div>
+            ) : (
+              <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', marginTop: '1rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                    <tr>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Milestone ID</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Beneficiary Name</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Scheme</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Milestone Name</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Due Date</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Days Overdue</th>
+                      <th style={{ padding: '0.75rem 1rem', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody style={{ fontSize: '0.85rem' }}>
+                    {overdueReports.map((rep, i) => (
+                      <tr key={rep.milestoneId} style={{ borderBottom: i === overdueReports.length - 1 ? 'none' : '1px solid var(--border)' }}>
+                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>#{rep.milestoneId}</td>
+                        <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{rep.beneficiaryName}</td>
+                        <td style={{ padding: '0.75rem 1rem' }}>{rep.schemeName}</td>
+                        <td style={{ padding: '0.75rem 1rem' }}>{rep.milestoneName}</td>
+                        <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', color: '#ef4444' }}>{rep.dueDate}</td>
+                        <td style={{ padding: '0.75rem 1rem', color: '#ef4444', fontWeight: 'bold' }}>
+                          {rep.daysOverdue} days
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <button
+                            className="button button--secondary"
+                            style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', borderColor: '#ef4444', color: '#ef4444' }}
+                            onClick={() => {
+                              setResolvingMilestoneId(rep.milestoneId)
+                              setShowResolveModal(true)
+                            }}
+                          >
+                            Resolve Override
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* TAB 4: ALERTS & REMINDERS */}
+        {activeTab === 'notifications' && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="pane-header">
+              <h2>Alerts &amp; Reminders Log</h2>
+              <p>Notifications dispatched to beneficiaries reminding them of upcoming due dates.</p>
+            </div>
+
+            {notifications.length === 0 ? (
+              <div className="empty-state" style={{ padding: '3rem' }}>
+                <p>No notifications have been dispatched yet.</p>
+              </div>
+            ) : (
+              <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+                {notifications.map(notif => (
+                  <div
+                    key={notif.id}
+                    className="notification-item"
+                    style={{
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      padding: '1.2rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>
+                        Recipient: {notif.user?.fullName} (@{notif.user?.username})
+                      </span>
+                      <span className="font-mono" style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                        Sent: {notif.sentDate}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)' }}>
+                      {notif.message}
+                    </p>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                      Milestone Reference: #{notif.milestoneId}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
 
-          {/* TAB 5: PROFILE CHECK */}
-          {activeTab === 'profile' && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <ProfilePanel
-                profile={officer}
-                role={officer?.role || officer?.designation || 'FIELD_OFFICER'}
-                editable={false}
-                deletable={false}
-                subtitle="Review the officer account details that are already stored in the backend."
-              />
-            </motion.div>
-          )}
-        </div>
-      </main>
+        {/* TAB 5: PROFILE CHECK */}
+        {activeTab === 'profile' && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <ProfilePanel
+              profile={officer}
+              role={officer?.role || officer?.designation || 'FIELD_OFFICER'}
+              editable={false}
+              deletable={false}
+              subtitle="Review the officer account details that are already stored in the backend."
+            />
+          </motion.div>
+        )}
+      </div>
 
       {/* Application Details Modal */}
       <AnimatePresence>
@@ -964,7 +995,7 @@ export default function OfficerDashboard() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: '1000px', width: '90%', textAlign: 'left' }}
+              style={{ maxWidth: '1000px', width: '90%', textAlign: 'left', background: '#fff', color: 'var(--text)', border: '1px solid var(--border)' }}
             >
               {officer?.role === 'FIELD_OFFICER' ? (
                 // FIELD INSPECTOR DETAILED SCREEN (Image 3 & 4)
@@ -1027,7 +1058,7 @@ export default function OfficerDashboard() {
                         Verification Checklist
                       </h4>
                       <div className="checklist-tiles" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                        <div 
+                        <div
                           className={`checklist-tile ${checklist.address ? 'checklist-tile--checked' : ''}`}
                           onClick={() => setChecklist(prev => ({ ...prev, address: !prev.address }))}
                           style={{ border: '1px solid var(--border)', padding: '0.65rem 0.85rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', cursor: 'pointer', background: checklist.address ? 'rgba(22, 163, 74, 0.03)' : 'transparent', transition: 'all 150ms ease' }}
@@ -1039,7 +1070,7 @@ export default function OfficerDashboard() {
                           </div>
                         </div>
 
-                        <div 
+                        <div
                           className={`checklist-tile ${checklist.business ? 'checklist-tile--checked' : ''}`}
                           onClick={() => setChecklist(prev => ({ ...prev, business: !prev.business }))}
                           style={{ border: '1px solid var(--border)', padding: '0.65rem 0.85rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', cursor: 'pointer', background: checklist.business ? 'rgba(22, 163, 74, 0.03)' : 'transparent', transition: 'all 150ms ease' }}
@@ -1051,7 +1082,7 @@ export default function OfficerDashboard() {
                           </div>
                         </div>
 
-                        <div 
+                        <div
                           className={`checklist-tile ${checklist.assets ? 'checklist-tile--checked' : ''}`}
                           onClick={() => setChecklist(prev => ({ ...prev, assets: !prev.assets }))}
                           style={{ border: '1px solid var(--border)', padding: '0.65rem 0.85rem', borderRadius: '6px', display: 'flex', gap: '0.75rem', cursor: 'pointer', background: checklist.assets ? 'rgba(22, 163, 74, 0.03)' : 'transparent', transition: 'all 150ms ease' }}
@@ -1114,7 +1145,7 @@ export default function OfficerDashboard() {
                   {/* Field Observations Notes */}
                   <div className="detail-field" style={{ marginBottom: '1.8rem' }}>
                     <label style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem' }}>Field Observations & Inspector Notes</label>
-                    <textarea 
+                    <textarea
                       placeholder="Add compliance notes or report comments here..."
                       value={fieldNotes}
                       onChange={(e) => setFieldNotes(e.target.value)}
@@ -1127,8 +1158,8 @@ export default function OfficerDashboard() {
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                     <button className="button button--ghost" onClick={closeModal} disabled={submittingInspection} style={{ padding: '0.55rem 1.25rem' }}>Cancel</button>
-                    <button 
-                      className="button button--primary" 
+                    <button
+                      className="button button--primary"
                       onClick={handleInspectionSubmit}
                       disabled={submittingInspection || uploadedMediaIds.some(m => m.uploading)}
                       style={{ padding: '0.55rem 1.25rem', background: 'var(--accent)', color: '#fff', opacity: submittingInspection ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -1270,14 +1301,14 @@ export default function OfficerDashboard() {
                           ))
                         ) : (
                           <>
-                            <button 
+                            <button
                               className={`document-tab-btn ${activeDocTab === 'aadhaar' ? 'active' : ''}`}
                               onClick={() => setActiveDocTab('aadhaar')}
                               style={{ border: 'none', background: 'transparent', padding: '0.4rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, color: activeDocTab === 'aadhaar' ? 'var(--accent)' : 'var(--muted)', cursor: 'pointer', borderBottom: activeDocTab === 'aadhaar' ? '2px solid var(--accent)' : 'none' }}
                             >
                               Aadhaar
                             </button>
-                            <button 
+                            <button
                               className={`document-tab-btn ${activeDocTab === 'income' ? 'active' : ''}`}
                               onClick={() => setActiveDocTab('income')}
                               style={{ border: 'none', background: 'transparent', padding: '0.4rem 0.75rem', fontSize: '0.8rem', fontWeight: 600, color: activeDocTab === 'income' ? 'var(--accent)' : 'var(--muted)', cursor: 'pointer', borderBottom: activeDocTab === 'income' ? '2px solid var(--accent)' : 'none' }}
@@ -1292,7 +1323,7 @@ export default function OfficerDashboard() {
                       <div className="doc-preview-pane" style={{ border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden', background: '#fafaf9', flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <div className="doc-preview-pane__header" style={{ padding: '0.45rem 0.75rem', background: '#f5f4f0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.76rem', color: 'var(--text-soft)' }}>
                           <span>
-                            {selectedApp.documents && selectedApp.documents.length > 0 
+                            {selectedApp.documents && selectedApp.documents.length > 0
                               ? selectedApp.documents.find(d => d.type === activeDocTab)?.url.split('/').pop() || 'Document'
                               : activeDocTab === 'aadhaar' ? 'Aadhaar_Card_Scan.jpg' : 'Income_Certificate.pdf'
                             }
@@ -1387,8 +1418,8 @@ export default function OfficerDashboard() {
                   <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '1rem', alignItems: 'center' }}>
                     <button className="button button--ghost" onClick={closeModal} style={{ padding: '0.55rem 1.25rem' }}>Close</button>
                     {(selectedApp.status === 'Approved' || selectedApp.status === 'APPROVED') && (
-                      <button 
-                        className="button button--primary" 
+                      <button
+                        className="button button--primary"
                         onClick={() => {
                           closeModal();
                           fetchAndOpenDisbursement(selectedApp.id);
@@ -1432,7 +1463,7 @@ export default function OfficerDashboard() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: '650px', textAlign: 'left', overflowY: 'auto', maxHeight: '90vh' }}
+              style={{ maxWidth: '650px', textAlign: 'left', overflowY: 'auto', maxHeight: '90vh', background: '#fff', color: 'var(--text)', border: '1px solid var(--border)' }}
             >
               <div className="tracking-card__header" style={{ marginBottom: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ margin: 0 }}>
@@ -1466,9 +1497,9 @@ export default function OfficerDashboard() {
                         <tr key={idx}>
                           <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text)' }}>{stage.stageNumber}</td>
                           <td>
-                            <input 
-                              type="text" 
-                              value={stage.milestoneName} 
+                            <input
+                              type="text"
+                              value={stage.milestoneName}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setPlanConfigStages(prev => prev.map((s, i) => i === idx ? { ...s, milestoneName: val } : s))
@@ -1477,9 +1508,9 @@ export default function OfficerDashboard() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="number" 
-                              value={stage.amountToRelease} 
+                            <input
+                              type="number"
+                              value={stage.amountToRelease}
                               onChange={(e) => {
                                 const val = Number(e.target.value);
                                 setPlanConfigStages(prev => prev.map((s, i) => i === idx ? { ...s, amountToRelease: val } : s))
@@ -1488,9 +1519,9 @@ export default function OfficerDashboard() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="date" 
-                              value={stage.dueDate} 
+                            <input
+                              type="date"
+                              value={stage.dueDate}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setPlanConfigStages(prev => prev.map((s, i) => i === idx ? { ...s, dueDate: val } : s))
@@ -1531,15 +1562,15 @@ export default function OfficerDashboard() {
                 // MILESTONE TIMELINE VIEW
                 <div>
                   <h4 style={{ margin: '0 0 1.5rem 0' }}>Disbursement Milestone Tracking</h4>
-                  
+
                   <div className="timeline">
                     {disbursementPlan.milestones.map((m, idx) => {
-                      const isPrevReleasedOrCompleted = idx === 0 || 
-                        disbursementPlan.milestones.slice(0, idx).every(prev => 
+                      const isPrevReleasedOrCompleted = idx === 0 ||
+                        disbursementPlan.milestones.slice(0, idx).every(prev =>
                           prev.completionStatus === 'RELEASED' || prev.completionStatus === 'COMPLETED'
                         );
-                      
-                      const hasOverdueEarlier = disbursementPlan.milestones.slice(0, idx).some(prev => 
+
+                      const hasOverdueEarlier = disbursementPlan.milestones.slice(0, idx).some(prev =>
                         prev.completionStatus === 'OVERDUE'
                       );
 
@@ -1571,8 +1602,8 @@ export default function OfficerDashboard() {
 
                             <div className="timeline-actions">
                               {m.completionStatus === 'PENDING' && (
-                                <button 
-                                  className="button button--ghost" 
+                                <button
+                                  className="button button--ghost"
                                   style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem' }}
                                   onClick={() => handleCompleteMilestone(m.milestoneId)}
                                 >
@@ -1580,17 +1611,17 @@ export default function OfficerDashboard() {
                                 </button>
                               )}
                               {m.completionStatus === 'COMPLETED' && (
-                                <button 
-                                  className="button button--primary" 
+                                <button
+                                  className="button button--primary"
                                   style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem' }}
                                   onClick={() => handleReleaseMilestone(m.milestoneId)}
                                   disabled={isReleaseBlocked}
                                   title={
-                                    hasOverdueEarlier 
-                                      ? "Release blocked because an earlier stage is OVERDUE." 
-                                      : isReleaseBlocked 
-                                      ? "Previous stage must be complete/released to release funds." 
-                                      : "Release milestone funds"
+                                    hasOverdueEarlier
+                                      ? "Release blocked because an earlier stage is OVERDUE."
+                                      : isReleaseBlocked
+                                        ? "Previous stage must be complete/released to release funds."
+                                        : "Release milestone funds"
                                   }
                                 >
                                   Release Funds
@@ -1601,8 +1632,8 @@ export default function OfficerDashboard() {
                                   <span style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 600 }}>
                                     ⚠️ Non-compliant / Overdue
                                   </span>
-                                  <button 
-                                    className="button button--secondary" 
+                                  <button
+                                    className="button button--secondary"
                                     style={{ padding: '0.35rem 0.8rem', fontSize: '0.82rem', borderColor: '#ef4444', color: '#ef4444' }}
                                     onClick={() => {
                                       setResolvingMilestoneId(m.milestoneId)
@@ -1648,7 +1679,7 @@ export default function OfficerDashboard() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: '450px', textAlign: 'left' }}
+              style={{ maxWidth: '450px', textAlign: 'left', background: '#fff', color: 'var(--text)', border: '1px solid var(--border)' }}
             >
               <h3 style={{ margin: '0 0 1rem 0', color: '#ef4444' }}>Admin Compliance Override</h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>
@@ -1662,12 +1693,12 @@ export default function OfficerDashboard() {
                   value={resolvedReasonInput}
                   onChange={(e) => setResolvedReasonInput(e.target.value)}
                   rows={4}
-                  style={{ 
-                    width: '100%', 
-                    padding: '0.6rem', 
-                    borderRadius: '6px', 
-                    border: '1px solid var(--border)', 
-                    background: 'var(--bg)', 
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg)',
                     color: 'var(--text)',
                     fontFamily: 'inherit',
                     fontSize: '0.9rem',
@@ -1684,8 +1715,8 @@ export default function OfficerDashboard() {
                 }}>
                   Cancel
                 </button>
-                <button 
-                  className="button button--primary" 
+                <button
+                  className="button button--primary"
                   style={{ background: '#ef4444', borderColor: '#ef4444' }}
                   onClick={handleResolveMilestone}
                   disabled={isResolving || !resolvedReasonInput.trim()}
@@ -1697,7 +1728,6 @@ export default function OfficerDashboard() {
           </div>
         )}
       </AnimatePresence>
-
       <style>{`
         .timeline {
           position: relative;
@@ -1808,7 +1838,8 @@ export default function OfficerDashboard() {
           color: #ef4444;
           border: 1px solid rgba(239, 68, 68, 0.3);
         }
-      `}</style>
-    </div>
+      `}
+      </style>
+    </AdminLayout >
   )
 }

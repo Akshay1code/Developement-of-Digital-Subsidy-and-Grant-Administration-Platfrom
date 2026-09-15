@@ -2640,3 +2640,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   SCHEME ANALYTICS DASHBOARD — On-theme layout utilities
+   ========================================================================== */
+
+.dashboard-main--analytics {
+  background: #F7FCF8;
+  min-height: calc(100vh - 72px);
+}
+
+.scheme-dashboard-stack {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+/* Span 2 columns when siblings also in the same grid */
+.analytics-span-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .analytics-span-2 {
+    grid-column: span 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

@@ -369,7 +369,7 @@ export default function AdminLayout({
             </button>
 
 
-            {/* ------------------------------------------------
+          {/* ------------------------------------------------
                 USER PROFILE
             ------------------------------------------------- */}
             <button
@@ -377,6 +377,7 @@ export default function AdminLayout({
               className="admin-header__profile"
               aria-label={`Open profile for ${userName || 'Administrator'
                 }`}
+              onClick={() => onTabChange && onTabChange('profile')}
             >
 
               {/* Avatar */}
@@ -407,6 +408,42 @@ export default function AdminLayout({
               />
 
             </button>
+
+            {/* Logout */}
+            {onLogout && (
+              <button
+                type="button"
+                className="admin-header__icon-btn"
+                aria-label="Sign out"
+                onClick={onLogout}
+                title="Logout"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  background: 'rgba(239,68,68,0.07)',
+                  color: '#ef4444',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.18s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(239,68,68,0.15)'
+                  e.currentTarget.style.borderColor = 'rgba(239,68,68,0.6)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(239,68,68,0.07)'
+                  e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'
+                }}
+              >
+                <Icon.LogOut size={15} strokeWidth={2} />
+                Logout
+              </button>
+            )}
 
           </div>
 

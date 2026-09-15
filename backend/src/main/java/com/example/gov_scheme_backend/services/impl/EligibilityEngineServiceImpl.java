@@ -1,7 +1,7 @@
 package com.example.gov_scheme_backend.services.impl;
 
 import com.example.gov_scheme_backend.entities.*;
-import com.example.gov_scheme_backend.enums.RuleField;
+
 import com.example.gov_scheme_backend.exceptions.BadRequestException;
 import com.example.gov_scheme_backend.exceptions.ResourceNotFoundException;
 import com.example.gov_scheme_backend.repositories.ApplicationRepo;
@@ -21,10 +21,8 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
     @Autowired
     SchemeEligibilityRuleRepo schemeEligibilityRuleRepo;
 
-    private static boolean isNumericRuleField(RuleField field) {
-        return field == RuleField.AGE
-                || field == RuleField.ANNUAL_INCOME
-                || field == RuleField.LAND_AREA;
+    private static boolean looksNumeric(String value) {
+        return parseDoubleSafely(value) != null;
     }
 
     private static double safeTolerance(SchemeEligibilityRule rule) {
@@ -53,7 +51,7 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
 
     public com.example.gov_scheme_backend.dto.response.application.EligibilityEngineScoreDTO validateFields(Long applicationId){
 
-        Application application = applicationRepo.findById(applicationId)
+        Application application = applicationRepo.findByIdWithSchemeAndRules(applicationId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Application not found"));
 
@@ -61,20 +59,24 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
         double totalScore = 0;
         double totalPossibleScore = 0;
         java.util.List<com.example.gov_scheme_backend.dto.response.application.EligibilityFieldResultDTO> fieldBreakdown = new java.util.ArrayList<>();
-        Map<RuleField, String> userFields = new HashMap<>();
+        // Normalize all keys to UPPERCASE for case-insensitive rule matching
+        Map<String, String> userFields = new HashMap<>();
         for (ApplicationFieldValue field : application.getFieldValues()) {
-
-            userFields.put(
-                    field.getFieldName(),
-                    field.getFieldValue()
-            );
+            if (field.getFieldName() != null) {
+                userFields.put(
+                        field.getFieldName().trim().toUpperCase(),
+                        field.getFieldValue()
+                );
+            }
         }
         for (SchemeEligibilityRule rule : rules) {
             if (rule == null || rule.getFieldName() == null) {
                 continue;
             }
 
-            String userValue = userFields.get(rule.getFieldName());
+            // Normalize rule fieldName to uppercase for lookup
+            String normalizedRuleField = rule.getFieldName().trim().toUpperCase();
+            String userValue = userFields.get(normalizedRuleField);
             if (userValue == null) {
                 continue;
             }
@@ -90,24 +92,32 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
 
             switch (rule.getOperator()) {
 
-                case EQUALS:
-                    if (userValue.equalsIgnoreCase(rule.getRuleValue())) {
-                        pointsAwarded = effectivePoints;
-                        ruleMet = true;
+                case EQUALS: {
+                    // Try numeric equality first for better precision
+                    Double userNum = parseDoubleSafely(userValue);
+                    Double expNum = parseDoubleSafely(rule.getRuleValue());
+                    if (userNum != null && expNum != null) {
+                        ruleMet = userNum.equals(expNum);
+                    } else {
+                        ruleMet = userValue.equalsIgnoreCase(rule.getRuleValue());
                     }
+                    if (ruleMet) pointsAwarded = effectivePoints;
                     break;
+                }
 
-                case NOT_EQUALS:
-                    if (!userValue.equalsIgnoreCase(rule.getRuleValue())) {
-                        pointsAwarded = effectivePoints;
-                        ruleMet = true;
+                case NOT_EQUALS: {
+                    Double userNum = parseDoubleSafely(userValue);
+                    Double expNum = parseDoubleSafely(rule.getRuleValue());
+                    if (userNum != null && expNum != null) {
+                        ruleMet = !userNum.equals(expNum);
+                    } else {
+                        ruleMet = !userValue.equalsIgnoreCase(rule.getRuleValue());
                     }
+                    if (ruleMet) pointsAwarded = effectivePoints;
                     break;
+                }
 
                 case GREATER_THAN: {
-                    if (!isNumericRuleField(rule.getFieldName())) {
-                        break;
-                    }
                     Double user = parseDoubleSafely(userValue);
                     Double expected = parseDoubleSafely(rule.getRuleValue());
                     if (user == null || expected == null) {
@@ -127,9 +137,6 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
                 }
 
                 case GREATER_THAN_EQUAL: {
-                    if (!isNumericRuleField(rule.getFieldName())) {
-                        break;
-                    }
                     Double user = parseDoubleSafely(userValue);
                     Double expected = parseDoubleSafely(rule.getRuleValue());
                     if (user == null || expected == null) {
@@ -149,9 +156,6 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
                 }
 
                 case LESS_THAN: {
-                    if (!isNumericRuleField(rule.getFieldName())) {
-                        break;
-                    }
                     Double user = parseDoubleSafely(userValue);
                     Double expected = parseDoubleSafely(rule.getRuleValue());
                     if (user == null || expected == null) {
@@ -171,9 +175,6 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
                 }
 
                 case LESS_THAN_EQUAL: {
-                    if (!isNumericRuleField(rule.getFieldName())) {
-                        break;
-                    }
                     Double user = parseDoubleSafely(userValue);
                     Double expected = parseDoubleSafely(rule.getRuleValue());
                     if (user == null || expected == null) {
@@ -198,7 +199,7 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
 
             com.example.gov_scheme_backend.dto.response.application.EligibilityFieldResultDTO fieldResult =
                     new com.example.gov_scheme_backend.dto.response.application.EligibilityFieldResultDTO();
-            fieldResult.setFieldName(rule.getFieldName().name());
+            fieldResult.setFieldName(rule.getFieldName());
             fieldResult.setOperator(rule.getOperator().name());
             fieldResult.setExpectedValue(rule.getRuleValue());
             fieldResult.setUserValue(userValue);
@@ -207,7 +208,7 @@ public class EligibilityEngineServiceImpl implements EligibilityEngineService {
             fieldResult.setPartialCredit(partialCredit);
             fieldResult.setRuleMet(ruleMet);
             fieldResult.setRequirementDescription(
-                    buildRequirementDescription(rule.getFieldName().name(), rule.getOperator().name(), rule.getRuleValue()));
+                    buildRequirementDescription(rule.getFieldName(), rule.getOperator().name(), rule.getRuleValue()));
             fieldResult.setScoreDescription(
                     buildScoreDescription(pointsAwarded, pointsPossible, ruleMet, partialCredit));
             fieldBreakdown.add(fieldResult);

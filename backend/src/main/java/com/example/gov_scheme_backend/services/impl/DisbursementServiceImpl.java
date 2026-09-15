@@ -512,16 +512,17 @@ public class DisbursementServiceImpl implements DisbursementService {
         LocalDate today = LocalDate.now();
         LocalDate threeDaysLater = today.plusDays(3);
 
-        List<DisbursementMilestone> upcomingPending = milestoneRepo.findByCompletionStatusAndDueDateBetween(
-                MilestoneStatus.PENDING, today, threeDaysLater);
+        List<Object[]> upcomingPending = milestoneRepo.findUpcomingPendingMilestonesWithApplication(
+                today, threeDaysLater);
 
-        for (DisbursementMilestone m : upcomingPending) {
+        for (Object[] row : upcomingPending) {
+            DisbursementMilestone m = (DisbursementMilestone) row[0];
+            Application app = (Application) row[1];
             // Idempotency check: if reminder sent today, skip
             if (notificationRepo.existsByMilestoneIdAndSentDate(m.getMilestoneId(), today)) {
                 continue;
             }
 
-            Application app = applicationRepo.findById(m.getPlan().getApplicationId()).orElse(null);
             if (app != null && app.getUser() != null) {
                 Users beneficiary = app.getUser();
                 String messageText = "Reminder: Your subsidy milestone '" + m.getMilestoneName()
@@ -544,10 +545,11 @@ public class DisbursementServiceImpl implements DisbursementService {
     public void flagOverdueMilestones() {
         LocalDate today = LocalDate.now();
 
-        List<DisbursementMilestone> overduePending = milestoneRepo.findByCompletionStatusAndDueDateBefore(
-                MilestoneStatus.PENDING, today);
+        List<Object[]> overduePending = milestoneRepo.findOverduePendingMilestonesWithApplication(today);
 
-        for (DisbursementMilestone m : overduePending) {
+        for (Object[] row : overduePending) {
+            DisbursementMilestone m = (DisbursementMilestone) row[0];
+            Application overdueApp = (Application) row[1];
             // Update status to OVERDUE
             m.setCompletionStatus(MilestoneStatus.OVERDUE);
             milestoneRepo.save(m);
@@ -566,7 +568,6 @@ public class DisbursementServiceImpl implements DisbursementService {
             // exactly once (the query only selects PENDING rows), so the
             // notification fires at most once per milestone — no duplicate guard
             // needed.
-            Application overdueApp = applicationRepo.findById(m.getPlan().getApplicationId()).orElse(null);
             if (overdueApp != null && overdueApp.getUser() != null) {
                 notificationService.createAndPublishNotification(
                         overdueApp.getUser(),
@@ -625,13 +626,14 @@ public class DisbursementServiceImpl implements DisbursementService {
 
     @Override
     public List<OverdueMilestoneResponse> getOverdueMilestonesReport() {
-        List<DisbursementMilestone> overdueMilestones = milestoneRepo.findByCompletionStatus(MilestoneStatus.OVERDUE);
+        List<Object[]> results = milestoneRepo.findOverdueMilestonesWithApplication();
 
         List<OverdueMilestoneResponse> responses = new ArrayList<>();
         LocalDate today = LocalDate.now();
 
-        for (DisbursementMilestone m : overdueMilestones) {
-            Application app = applicationRepo.findById(m.getPlan().getApplicationId()).orElse(null);
+        for (Object[] row : results) {
+            DisbursementMilestone m = (DisbursementMilestone) row[0];
+            Application app = (Application) row[1];
             String beneficiaryName = (app != null && app.getUser() != null) ? app.getUser().getFullName() : "Unknown";
             String schemeName = (app != null && app.getScheme() != null) ? app.getScheme().getSchemeName() : "Unknown";
             long daysOverdue = ChronoUnit.DAYS.between(m.getDueDate(), today);

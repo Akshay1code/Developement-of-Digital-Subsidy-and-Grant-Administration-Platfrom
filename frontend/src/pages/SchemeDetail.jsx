@@ -1,11 +1,14 @@
 import '../styles/SchemeDetail.css';
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getSchemes } from '../services/schemeService'
 import { getApplications, submitApplicationBySchemeCode, cancelApplicationById, uploadApplicationDocuments } from '../services/applicationService'
 import { runEligibilityEngine } from '../services/eligibilityService'
 import api from '../services/api'
+import ApplicationFormStep from '../components/ApplicationFormStep'
+import EligibilityResultsStep from '../components/EligibilityResultsStep'
+import DocumentSubmissionStep from '../components/DocumentSubmissionStep'
 
 function normalizeRuleField(fieldName) {
   return String(fieldName || '')
@@ -96,8 +99,9 @@ export default function SchemeDetail() {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [loadingApplications, setLoadingApplications] = useState(true)
   
-  // UI views: 'detail' | 'apply' | 'docs'
+  // UI views: 'detail' | 'apply' | 'success'
   const [viewState, setViewState] = useState('detail')
+  const [wizardStep, setWizardStep] = useState(1)
   
   // Terms agreement state
   const [agreed, setAgreed] = useState(false)
@@ -178,11 +182,31 @@ export default function SchemeDetail() {
   useEffect(() => {
     if (!scheme?.natureInputs?.length) return
     const initial = {}
+    
+    // First, try to seed from user's profile
     scheme.natureInputs.forEach(input => {
       initial[input.name] = getProfileSeedValue(profile, input.name)
     })
+
+    // Then, override with any previously saved draft/application data
+    const existingApp = applications.find(app => {
+      const appSchemeCode = app?.schemeCode || app?.schemeId || app?.scheme?.schemeCode
+      return appSchemeCode === scheme.schemeCode
+    })
+    
+    if (existingApp && existingApp.fields) {
+      Object.entries(existingApp.fields).forEach(([key, value]) => {
+        const match = scheme.natureInputs.find(i => String(i.name).toUpperCase() === String(key).toUpperCase())
+        if (match) {
+          initial[match.name] = value
+        } else {
+          initial[String(key).toLowerCase()] = value
+        }
+      })
+    }
+
     setFormInputs(initial)
-  }, [scheme?.schemeCode, profile])
+  }, [scheme?.schemeCode, profile, applications])
 
   useEffect(() => {
     if (viewState !== 'success') return
@@ -236,6 +260,7 @@ export default function SchemeDetail() {
   // Handle Form Change
   const handleInputChange = (e) => {
     setFormInputs(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setEligibilityResult(null)
   }
 
   const handleCheckScore = async () => {
@@ -254,6 +279,7 @@ export default function SchemeDetail() {
       const response = await runEligibilityEngine(eligibilityPayload)
       setEligibilityResult(response)
       await refreshApplications()
+      setWizardStep(2)
     } catch (error) {
       console.error('Failed to check score:', error.message)
       setEligibilityError(error.message || 'Eligibility engine request failed.')
@@ -265,7 +291,7 @@ export default function SchemeDetail() {
   const handleGoForDocsSubmission = () => {
     if (!canProceedToDocs) return
     setDocsError('')
-    setViewState('docs')
+    setWizardStep(3)
   }
 
   const handleCancelApplicationProcess = async () => {
@@ -281,6 +307,7 @@ export default function SchemeDetail() {
       setAgreed(false)
       setShowCancelConfirm(false)
       setViewState('detail')
+      setWizardStep(1)
       navigate('/dashboard', { replace: true })
     } catch (error) {
       setDocsError(error.message || 'Failed to cancel the application process.')
@@ -393,11 +420,37 @@ export default function SchemeDetail() {
                 ))}
               </div>
 
-              {/* Eligibility criteria block */}
               <div className="detail-section-block">
                 <h3>Eligibility Requirements</h3>
-                <p className="eligibility-desc">{scheme.eligibilityText}</p>
-                <div className="eligibility-status-large">
+                {(!scheme.rules || scheme.rules.length === 0) ? (
+                  <p className="eligibility-desc">No specific eligibility rules configured for this scheme.</p>
+                ) : (
+                  <ul className="eligibility-desc" style={{ listStyle: 'none', paddingLeft: 0 }}>
+                    {scheme.rules.map((rule, idx) => (
+                      <li key={idx} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        marginBottom: '8px',
+                        padding: '8px 12px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0'
+                      }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span style={{ fontWeight: 500, color: '#334155' }}>
+                          {humanizeEnum(rule.fieldName)}
+                        </span> 
+                        <span style={{ color: '#64748b' }}>
+                          {humanizeCondition(rule.operator, rule.expectedValue).toLowerCase()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="eligibility-status-large" style={{ marginTop: '16px' }}>
                   <span className="elig-label">Review Mode:</span>
                   <span className="badge-status-large status-applied">Details only, no profile check on this page</span>
                 </div>
@@ -497,253 +550,68 @@ export default function SchemeDetail() {
           /* ========================================= */
           /* VIEW 2: DETAILED QUALITY PHOTO FORM       */
           /* ========================================= */
-          <motion.div 
-            className="scheme-form-layout"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <div className="form-header-bar">
-              <h2>Official Application Form</h2>
-              <p>Scheme: {scheme.name}</p>
+          <div className="wizard-container">
+            {/* Step progress indicator */}
+            <div className="wizard-stepper">
+              {[
+                { step: 1, label: 'Application Form' },
+                { step: 2, label: 'Eligibility Check' },
+                { step: 3, label: 'Documents' },
+              ].map(({ step, label }, i) => (
+                <div key={step} className="wizard-stepper__item">
+                  <div className={`wizard-stepper__circle ${wizardStep === step ? 'is-active' : wizardStep > step ? 'is-done' : ''}`}>
+                    {wizardStep > step ? '✓' : step}
+                  </div>
+                  <span className={`wizard-stepper__label ${wizardStep === step ? 'is-active' : ''}`}>{label}</span>
+                  {i < 2 && <div className={`wizard-stepper__line ${wizardStep > step ? 'is-done' : ''}`} />}
+                </div>
+              ))}
             </div>
-
-            <form onSubmit={(e) => e.preventDefault()} className="application-form">
-              <div className="form-flex-columns">
-                
-                {/* Admin-configured scheme fields */}
-                <div className="form-column-inputs">
-                  <h3>1. Scheme-Specific Information</h3>
-                  <p className="helper-text">
-                    Fill only the fields configured by the scheme administrator for this scheme.
-                  </p>
-
-                  <div className="scheme-dynamic-inputs">
-                    {(scheme.natureInputs || []).length > 0 ? (
-                      (scheme.natureInputs || []).map((input) => (
-                        <div className="form-group" key={input.name}>
-                          <label>{input.label} {input.required && <span className="req">*</span>}</label>
-                          {input.type === 'select' ? (
-                            <select 
-                              name={input.name}
-                              value={formInputs[input.name] || ''}
-                              onChange={handleInputChange}
-                              required={input.required}
-                            >
-                              <option value="">-- Select option --</option>
-                              {input.options.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
-                          ) : (
-                            <input 
-                              type={input.type}
-                              name={input.name}
-                              placeholder={input.placeholder}
-                              value={formInputs[input.name] || ''}
-                              onChange={handleInputChange}
-                              required={input.required}
-                            />
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="elig-reasons-box" style={{ marginTop: 0 }}>
-                        <p className="box-title">No additional fields configured</p>
-                        <p className="box-tip">This scheme does not currently require any admin-defined input fields.</p>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-                <div className="form-column-actions">
-                  <div className="form-action-navs" style={{ marginTop: '1.6rem', flexWrap: 'wrap', gap: '0.9rem' }}>
-                    <button 
-                      type="button" 
-                      className="button button--ghost"
-                      onClick={openCancelConfirmation}
-                    >
-                      Cancel Application Process
-                    </button>
-
-                    <button 
-                      type="button" 
-                      className="button button--primary btn-apply"
-                      onClick={handleCheckScore}
-                      disabled={isCheckingScore}
-                    >
-                      {isCheckingScore ? 'Checking Score...' : 'Check Score'}
-                    </button>
-
-                    {hasInitiatedScoring && canProceedToDocs && (
-                      <button 
-                        type="button" 
-                        className="button button--ghost btn-apply"
-                        onClick={handleGoForDocsSubmission}
-                      >
-                        Go for Docs Submission
-                      </button>
-                    )}
-                  </div>
-
-                  {(eligibilityResult || eligibilityError) && (
-
-                    <motion.div
-                      className="eligibility-results-container"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.28 }}
-                      style={{ marginTop: '3rem' }}
-                    >
-                      <div className="eligibility-results-header">
-                        <h2>Eligibility Evaluation Results</h2>
-                        <p>Review the breakdown of your recent assessment.</p>
-                      </div>
-
-                      {eligibilityResult ? (
-                        <div className="eligibility-results-grid">
-                          <div className="eligibility-results-left">
-                            <div className={`eligibility-status-card ${eligibilityResult.status ? 'status-eligible' : 'status-ineligible'}`}>
-                              <div className="status-icon">
-                                {eligibilityResult.status ? '✓' : '✕'}
-                              </div>
-                              <h3>{eligibilityResult.status ? 'Eligible' : 'Not Eligible'}</h3>
-                              <p>
-                                {eligibilityResult.status 
-                                  ? 'Based on the provided information, you meet the requirements for this scheme.'
-                                  : 'Based on the provided information, you do not meet the minimum requirements at this time.'}
-                              </p>
-                            </div>
-
-                            <div className="eligibility-score-summary-card">
-                              <span className="score-summary-label">SCORE SUMMARY</span>
-                              <div className="score-summary-values">
-                                <div className="score-computed">
-                                  <span className="score-label">Computed Total</span>
-                                  <span className="score-value">{Number(eligibilityScore || 0).toFixed(1)}</span>
-                                </div>
-                                <div className="score-required">
-                                  <span className="score-label">Required</span>
-                                  <span className="score-value">{Number(eligibilityThreshold || 0).toFixed(1)}</span>
-                                </div>
-                              </div>
-                              <div className="score-progress-bar">
-                                <div 
-                                  className="score-progress-fill" 
-                                  style={{ width: `${Math.min(100, (eligibilityScore / (eligibilityThreshold || 1)) * 100)}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="eligibility-results-right">
-                            <span className="breakdown-label">EVALUATION BREAKDOWN</span>
-                            <div className="breakdown-cards-list">
-                                {eligibilityResult.fieldBreakdown?.map((field, idx) => (
-                                  <div key={idx} className="breakdown-field-card">
-                                    <div className="breakdown-field-header">
-                                      <h4>{humanizeEnum(field.fieldName)}</h4>
-                                      <span className={`breakdown-tag ${field.ruleMet ? 'tag-passed' : 'tag-failed'}`}>
-                                        <span className="tag-dot"></span>
-                                        {field.scoreDescription
-                                          ? field.scoreDescription
-                                          : `${field.ruleMet ? 'Passed' : 'Failed'} (${field.pointsAwarded}/${field.pointsPossible} pts)`}
-                                      </span>
-                                    </div>
-                                    <div className="breakdown-field-body">
-                                      <div className="breakdown-req-block">
-                                        <span className="block-label">Requirement</span>
-                                        <span className="block-value">
-                                          {field.requirementDescription
-                                            ? field.requirementDescription
-                                            : humanizeCondition(field.operator, field.expectedValue)}
-                                        </span>
-                                      </div>
-                                      <div className={`breakdown-input-block ${field.ruleMet ? 'input-passed' : 'input-failed'}`}>
-                                        <span className="block-label">Your Input</span>
-                                        <span className="block-value">{field.userValue}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="eligibility-error-box">
-                          {eligibilityError}
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </div>
-
-              </div>
-            </form>
-
-            {viewState === 'docs' && (
-              <motion.div
-                className="docs-submission-panel"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="docs-submission-panel__header">
-                  <div>
-                    <p className="console-eyebrow">Document submission</p>
-                    <h3>2. Supporting Documents</h3>
-                  </div>
-                  <span className="console-endpoint">Unlocked after eligibility check</span>
-                </div>
-
-                <p className="eligibility-console__copy">
-                  You have been found eligible for this scheme. Please upload the supporting documents required to complete your application.
-                </p>
-
-                <div className="docs-grid">
-                  {requiredDocuments.map((doc) => (
-                    <label className="doc-upload-card" key={doc.key}>
-                      <span className="doc-upload-card__label">{doc.label}</span>
-                      <span className="doc-upload-card__hint">{doc.hint}</span>
-                      <input
-                        type="file"
-                        name={doc.key}
-                        onChange={handleDocFileChange}
-                      />
-                      <span className="doc-upload-card__file">
-                        {docsFiles[doc.key]?.name || 'No file selected'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="form-action-navs" style={{ marginTop: '1.25rem', flexWrap: 'wrap', gap: '0.9rem' }}>
-                  <button 
-                    type="button" 
-                    className="button button--ghost"
-                    onClick={openCancelConfirmation}
-                  >
-                    Cancel Application Process
-                  </button>
-
-                  <button 
-                    type="button" 
-                    className="button button--primary btn-apply"
-                    onClick={handleSubmitDocuments}
-                    disabled={!canProceedToDocs || isSubmittingDocs}
-                  >
-                    {isSubmittingDocs ? 'Submitting...' : 'Submit Documents'}
-                  </button>
-                </div>
-
-                {docsError && (
-                  <div className="eligibility-error-box" style={{ marginTop: '1rem' }}>
-                    {docsError}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
+            <AnimatePresence mode="wait">
+              {wizardStep === 1 && (
+                <ApplicationFormStep
+                  key="step1"
+                  scheme={scheme}
+                  formInputs={formInputs}
+                  handleInputChange={handleInputChange}
+                  handleCheckScore={handleCheckScore}
+                  openCancelConfirmation={openCancelConfirmation}
+                  isCheckingScore={isCheckingScore}
+                  eligibilityResult={eligibilityResult}
+                  onNext={() => setWizardStep(2)}
+                />
+              )}
+              {wizardStep === 2 && (
+                <EligibilityResultsStep
+                  key="step2"
+                  eligibilityResult={eligibilityResult}
+                  eligibilityError={eligibilityError}
+                  eligibilityScore={eligibilityScore}
+                  eligibilityThreshold={eligibilityThreshold}
+                  eligibilityTotalPossible={eligibilityTotalPossible}
+                  onBack={() => setWizardStep(1)}
+                  onNext={handleGoForDocsSubmission}
+                  canProceedToDocs={canProceedToDocs}
+                />
+              )}
+              {wizardStep === 3 && (
+                <DocumentSubmissionStep
+                  key="step3"
+                  requiredDocuments={requiredDocuments}
+                  docsFiles={docsFiles}
+                  handleDocFileChange={handleDocFileChange}
+                  handleSubmitDocuments={handleSubmitDocuments}
+                  isSubmittingDocs={isSubmittingDocs}
+                  onBack={() => setWizardStep(2)}
+                  docsError={docsError}
+                  openCancelConfirmation={openCancelConfirmation}
+                  canProceedToDocs={canProceedToDocs}
+                />
+              )}
+            </AnimatePresence>
             {viewState === 'success' && (
               <motion.div
-                className="docs-submission-panel"
+                className="scheme-form-layout docs-submission-panel"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
               >
@@ -792,7 +660,7 @@ export default function SchemeDetail() {
                 </motion.div>
               </div>
             )}
-          </motion.div>
+          </div>
         ) : null}
       </main>
     </div>

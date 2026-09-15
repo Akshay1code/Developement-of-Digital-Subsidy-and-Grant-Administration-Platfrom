@@ -234,11 +234,17 @@ public class ApplicationController {
         List<Application> apps;
 
         if (viewerContext != null && isPrivilegedRole(viewerContext.role())) {
-            apps = applicationRepo.findAllByOrderByCreatedAtDesc();
+            // Admins and officers never see DRAFT or PENDING applications — only properly submitted ones
+            apps = applicationRepo.findAllByStatusNotInOrderByCreatedAtDesc(
+                    java.util.List.of(com.example.gov_scheme_backend.enums.ApplicationStatus.DRAFT, com.example.gov_scheme_backend.enums.ApplicationStatus.PENDING)
+            );
         } else if (viewerContext != null && viewerContext.userId() != null) {
+            // Beneficiaries see their own applications (including drafts)
             apps = applicationRepo.findByUser_IdOrderByCreatedAtDesc(viewerContext.userId());
         } else {
-            apps = applicationRepo.findAllByOrderByCreatedAtDesc();
+            apps = applicationRepo.findAllByStatusNotInOrderByCreatedAtDesc(
+                    java.util.List.of(com.example.gov_scheme_backend.enums.ApplicationStatus.DRAFT, com.example.gov_scheme_backend.enums.ApplicationStatus.PENDING)
+            );
         }
 
         List<Long> appIds = apps.stream().map(Application::getId).filter(java.util.Objects::nonNull).toList();
@@ -355,7 +361,7 @@ public class ApplicationController {
             java.util.Map<String, String> fields = new java.util.HashMap<>();
             if (app.getFieldValues() != null) {
                 for (com.example.gov_scheme_backend.entities.ApplicationFieldValue val : app.getFieldValues()) {
-                    String fieldNameStr = val.getFieldName() != null ? val.getFieldName().name() : "";
+                    String fieldNameStr = val.getFieldName() != null ? val.getFieldName() : "";
                     fields.put(fieldNameStr, val.getFieldValue());
                     if ("ANNUAL_INCOME".equalsIgnoreCase(fieldNameStr) || "INCOME".equalsIgnoreCase(fieldNameStr)) {
                         annualIncome = val.getFieldValue();

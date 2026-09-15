@@ -16,5 +16,6 @@ public enum RuleKey {
     MARITAL_STATUS,
     EMPLOYMENT_STATUS,
     OCCUPATION,
-    STATE
+    STATE,
+    COLLEGE_NAME
 }

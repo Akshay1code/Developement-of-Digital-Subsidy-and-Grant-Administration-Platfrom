@@ -12,7 +12,7 @@ import api from './api'
 export async function register(formData) {
   const payload = {
     fullName: formData.fullName,
-    role: 'BENEFICIARY',
+    role: formData.role,
     mobileNo: formData.mobileNo,
     region: formData.region,
     district: formData.district,

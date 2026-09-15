@@ -16,6 +16,9 @@ public interface ApplicationRepo extends JpaRepository<Application, Long> {
 
     Optional<Application> findByApplicationCode(String applicationCode);
 
+    @Query("SELECT a FROM Application a LEFT JOIN FETCH a.scheme s LEFT JOIN FETCH s.eligibilityRules WHERE a.id = :id")
+    Optional<Application> findByIdWithSchemeAndRules(@org.springframework.data.repository.query.Param("id") Long id);
+
     Optional<Application> findByUser_IdAndScheme_SchemeCode(
             Long userId,
             String schemeCode
@@ -24,6 +27,8 @@ public interface ApplicationRepo extends JpaRepository<Application, Long> {
     List<Application> findByUser_IdOrderByCreatedAtDesc(Long userId);
 
     List<Application> findAllByOrderByCreatedAtDesc();
+
+    List<Application> findAllByStatusNotInOrderByCreatedAtDesc(List<ApplicationStatus> statuses);
 
     List<Application> findByScheme_SchemeCode(String schemeCode);
 
@@ -36,6 +41,7 @@ public interface ApplicationRepo extends JpaRepository<Application, Long> {
     @Query("""
     SELECT a.user.region, COUNT(a.id)
     FROM Application a
+    WHERE a.status NOT IN (com.example.gov_scheme_backend.enums.ApplicationStatus.DRAFT, com.example.gov_scheme_backend.enums.ApplicationStatus.PENDING)
     GROUP BY a.user.region
     ORDER BY a.user.region
 """)
@@ -48,6 +54,7 @@ public interface ApplicationRepo extends JpaRepository<Application, Long> {
         SUM(CASE WHEN a.status = 'REJECTED' THEN 1 ELSE 0 END),
         SUM(CASE WHEN a.status = 'UNDER_REVIEW' THEN 1 ELSE 0 END)
     FROM Application a
+    WHERE a.status NOT IN (com.example.gov_scheme_backend.enums.ApplicationStatus.DRAFT, com.example.gov_scheme_backend.enums.ApplicationStatus.PENDING)
 """)
     Object[] getApplicationPerformance();
 
@@ -58,14 +65,16 @@ public interface ApplicationRepo extends JpaRepository<Application, Long> {
     @Query("""
         SELECT a.scheme.schemeCode, COUNT(a)
         FROM Application a
+        WHERE a.status NOT IN (com.example.gov_scheme_backend.enums.ApplicationStatus.DRAFT, com.example.gov_scheme_backend.enums.ApplicationStatus.PENDING)
         GROUP BY a.scheme.schemeCode
     """)
     List<Object[]> countApplicationsByScheme();
 
     @Query(value = """
-        SELECT FUNCTION('DATE_FORMAT', a.createdAt, '%Y-%m'), COUNT(a)
+        SELECT FUNCTION('TO_CHAR', a.createdAt, 'YYYY-MM'), COUNT(a)
         FROM Application a
-        GROUP BY FUNCTION('DATE_FORMAT', a.createdAt, '%Y-%m')
+        WHERE a.status NOT IN (com.example.gov_scheme_backend.enums.ApplicationStatus.DRAFT, com.example.gov_scheme_backend.enums.ApplicationStatus.PENDING)
+        GROUP BY FUNCTION('TO_CHAR', a.createdAt, 'YYYY-MM')
         ORDER BY 1
     """)
     List<Object[]> countApplicationsByMonth();
